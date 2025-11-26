@@ -13,7 +13,7 @@ public class NotepadWindow extends JFrame {
     private static final int WIDTH = 600;
 
     private TextEditorPanel textEditorPanel;
-    private AppMenuBar menuBar;
+    private AppMenuBar appMenuBar;
 
     public NotepadWindow() {
         super("Notepad");
@@ -23,17 +23,25 @@ public class NotepadWindow extends JFrame {
 
         // Create UI components
         this.textEditorPanel = new TextEditorPanel();
-        this.menuBar = new AppMenuBar();
+        this.appMenuBar = new AppMenuBar();
 
         // Add components to the window
         add(textEditorPanel, BorderLayout.CENTER);
-        add(menuBar, BorderLayout.NORTH);
+        add(appMenuBar, BorderLayout.NORTH);
 
         // Window settings
         setSize(WIDTH, HEIGHT);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null); // Center the window on screen
         setVisible(true);
+    }
+
+    public TextEditorPanel getTextEditorPanel() {
+        return this.textEditorPanel;
+    }
+
+    public AppMenuBar getAppMenuBar() {
+        return this.appMenuBar;
     }
 }
 

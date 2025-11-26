@@ -5,8 +5,7 @@ import java.awt.*;
 
 /**
  * Represents the application's top menu bar (File, Edit, Format).
- * This class uses a JPanel wrapper to keep layout flexible,
- * but it could also extend JMenuBar directly.
+ * This class uses a JPanel wrapper to keep layout flexible
  */
 public class AppMenuBar extends JPanel {
 
@@ -52,6 +51,10 @@ public class AppMenuBar extends JPanel {
 
         // Add the menu bar into this panel
         add(menuBar, BorderLayout.NORTH);
+    }
+
+    public JMenuBar getMenuBar() {
+        return this.menuBar;
     }
 }
 

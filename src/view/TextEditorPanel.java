@@ -29,5 +29,9 @@ public class TextEditorPanel extends JPanel {
         // Add the scroll pane to the panel (the scroll panel contains the textArea inside so both are added to the panel)
         add(scrollPane, BorderLayout.CENTER);
     }
+
+    public JTextArea getTextArea() {
+        return this.textArea;
+    }
 }
 
