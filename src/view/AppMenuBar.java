@@ -53,8 +53,20 @@ public class AppMenuBar extends JPanel {
         add(menuBar, BorderLayout.NORTH);
     }
 
-    public JMenuBar getMenuBar() {
+    public JMenuBar getJMenuBar() {
         return this.menuBar;
+    }
+
+    public JMenu getFileMenu(){
+        return this.menuBar.getMenu(0);
+    }
+
+    public JMenu getEditMenu(){
+        return this.menuBar.getMenu(1);
+    }
+
+    public JMenu getFormatMenu(){
+        return this.menuBar.getMenu(2);
     }
 }
 
