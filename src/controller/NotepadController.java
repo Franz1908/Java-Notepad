@@ -51,13 +51,35 @@ public class NotepadController {
     }
 
     public void saveAsFile(){
+        JFileChooser chooser = new JFileChooser();
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("Text File(*.txt)", "txt");
+        chooser.setFileFilter(filter);
+        chooser.setName("Save File");
+        chooser.setApproveButtonText("Save");
+        if(chooser.showOpenDialog(notepadWindow) == JFileChooser.APPROVE_OPTION){
+            File file = chooser.getSelectedFile();
+            String text = notepadWindow.getTextEditorPanel().getTextArea().getText();
+            documentModel.setFile(file);
+            documentModel.setModified(false);
+            documentModel.setText(text);
+            try {
+                FileService.saveFile(file, text);
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(notepadWindow,
+                        "The file cannot be saved",
+                        "Save as error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
         System.out.println("Saving file as...");
     }
 
     public void openFile(){
         JFileChooser chooser = new JFileChooser();
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("File di testo (*.txt)", "txt");
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("Text File(*.txt)", "txt");
         chooser.setFileFilter(filter);
+        chooser.setName("Open File");
+        chooser.setApproveButtonText("Open");
         if(chooser.showOpenDialog(notepadWindow) == JFileChooser.APPROVE_OPTION){
             File file = chooser.getSelectedFile();
             documentModel.setFile(file);
