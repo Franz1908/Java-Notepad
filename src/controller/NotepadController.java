@@ -9,6 +9,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 
@@ -61,6 +62,10 @@ public class NotepadController {
         fileMenu.getItem(0).addActionListener(e -> saveFile());
         fileMenu.getItem(1).addActionListener(e -> saveAsFile());
         fileMenu.getItem(2).addActionListener(e -> openFile());
+
+        fileMenu.getItem(0).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK));
+        fileMenu.getItem(1).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, KeyEvent.CTRL_DOWN_MASK));
+        fileMenu.getItem(2).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, KeyEvent.CTRL_DOWN_MASK));
     }
 
     /**
@@ -81,6 +86,7 @@ public class NotepadController {
             // Update model
             documentModel.setText(text);
             documentModel.setModified(false);
+            updateWindowTitle();
 
             // Save to file
             try {
