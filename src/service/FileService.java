@@ -19,7 +19,7 @@ public class FileService {
 
             while (line != null) {
                 sb.append(line);
-                //sb.append(System.lineSeparator());
+                sb.append(System.lineSeparator());
                 line = br.readLine();
             }
             return sb.toString();

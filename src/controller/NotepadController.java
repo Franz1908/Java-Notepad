@@ -58,6 +58,24 @@ public class NotepadController {
         chooser.setApproveButtonText("Save");
         if(chooser.showOpenDialog(notepadWindow) == JFileChooser.APPROVE_OPTION){
             File file = chooser.getSelectedFile();
+            if (!file.getName().toLowerCase().endsWith(".txt")) {
+                file = new File(file.getAbsolutePath() + ".txt");
+            }
+
+            // Conferma sovrascrittura se il file esiste già
+            if (file.exists()) {
+                int result = JOptionPane.showConfirmDialog(
+                        notepadWindow,
+                        "The file '" + file.getName() + "' already exists. Do you want to overwrite it?",
+                        "Confirm Overwrite",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE
+                );
+
+                if (result != JOptionPane.YES_OPTION) {
+                    return;  // L'utente ha scelto "No", esci dal metodo senza salvare
+                }
+            }
             String text = notepadWindow.getTextEditorPanel().getTextArea().getText();
             documentModel.setFile(file);
             documentModel.setModified(false);
