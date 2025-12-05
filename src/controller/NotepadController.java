@@ -5,7 +5,10 @@ import service.FileService;
 import view.NotepadWindow;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
@@ -27,6 +30,27 @@ public class NotepadController {
     public NotepadController(NotepadWindow notepadWindow, DocumentModel documentModel) {
         this.notepadWindow = notepadWindow;
         this.documentModel = documentModel;
+
+        JTextArea textArea = notepadWindow.getTextEditorPanel().getTextArea();
+        textArea.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent documentEvent) {
+                documentModel.setModified(true);
+                updateWindowTitle();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent documentEvent) {
+                documentModel.setModified(true);
+                updateWindowTitle();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent documentEvent) {
+                documentModel.setModified(true);
+                updateWindowTitle();
+            }
+        });
 
         // Get menu references
         JMenu fileMenu = notepadWindow.getAppMenuBar().getFileMenu();
@@ -117,7 +141,7 @@ public class NotepadController {
             documentModel.setFile(file);
             documentModel.setModified(false);
             documentModel.setText(text);
-
+            updateWindowTitle();
             // Save to file
             try {
                 FileService.saveFile(file, text);
@@ -154,6 +178,8 @@ public class NotepadController {
             documentModel.setFile(file);
             documentModel.setModified(false);
 
+            updateWindowTitle();
+
             // Read file and display content
             try {
                 String text = FileService.readFile(file);
@@ -170,5 +196,20 @@ public class NotepadController {
         }
 
         System.out.println("Opening file...");
+    }
+
+    private void updateWindowTitle() {
+        File file = documentModel.getFile();
+        String title;
+
+        if (file == null) {
+            title = "Notepad - Untitled";
+        } else {
+            String fileName = file.getName();
+            String modifiedMarker = documentModel.isModified() ? "*" : "";
+            title = "Notepad - " + modifiedMarker + fileName;
+        }
+
+        notepadWindow.setTitle(title);
     }
 }

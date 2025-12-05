@@ -21,7 +21,7 @@ public class NotepadWindow extends JFrame {
      * Sets up the layout, creates UI components, and configures window properties.
      */
     public NotepadWindow() {
-        super("Notepad");
+        super("Notepad - Untitled");
 
         // Set BorderLayout for the main window
         setLayout(new BorderLayout());
