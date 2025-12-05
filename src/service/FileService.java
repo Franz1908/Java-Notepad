@@ -1,16 +1,30 @@
 package service;
 
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
+import java.io.*;
+import java.nio.file.Files;
 
 public class FileService {
-    private static JFileChooser fileChooser;
 
-    public static void saveFile(){
-        fileChooser = new JFileChooser();
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("Text Files", "txt");
-        fileChooser.addChoosableFileFilter(filter);
-        fileChooser.setAcceptAllFileFilterUsed(false);
-        fileChooser.showSaveDialog(null);
+    public static void saveFile(File file, String text) throws IOException {
+        FileWriter fw = new FileWriter(file);
+        fw.write(text);
+        fw.close();
     }
+
+    public static String readFile(File file) throws IOException {
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            StringBuilder sb = new StringBuilder();
+            String line = br.readLine();
+
+            while (line != null) {
+                sb.append(line);
+                //sb.append(System.lineSeparator());
+                line = br.readLine();
+            }
+            return sb.toString();
+        }
+    }
+
+
 }
