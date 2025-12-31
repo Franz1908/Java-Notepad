@@ -9,9 +9,11 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.Stack;
 
 /**
  * Controller class that manages user interactions and coordinates
@@ -22,6 +24,12 @@ public class NotepadController {
     private NotepadWindow notepadWindow;
     private DocumentModel documentModel;
 
+    /** Stack containing previous document states for undo functionality */
+    private Stack<String> undoStack = new Stack<>();
+
+    /** Last saved state to avoid duplicate entries in the undo stack */
+    private String lastSavedState = "";
+
     /**
      * Constructor that initializes the controller and sets up menu action listeners.
      *
@@ -31,8 +39,9 @@ public class NotepadController {
     public NotepadController(NotepadWindow notepadWindow, DocumentModel documentModel) {
         this.notepadWindow = notepadWindow;
         this.documentModel = documentModel;
-
         JTextArea textArea = notepadWindow.getTextEditorPanel().getTextArea();
+
+        // Add document listener to sync model with view on every text change
         textArea.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent documentEvent) {
@@ -50,6 +59,29 @@ public class NotepadController {
             }
         });
 
+        // Add key listener to save state at appropriate moments for undo functionality
+        textArea.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                int keyCode = e.getKeyCode();
+
+                // Save state before destructive actions (backspace, delete)
+                if (keyCode == KeyEvent.VK_BACK_SPACE || keyCode == KeyEvent.VK_DELETE) {
+                    saveState();
+                }
+            }
+
+            @Override
+            public void keyTyped(KeyEvent e) {
+                char c = e.getKeyChar();
+
+                // Save state after word completion (space, enter, punctuation)
+                if (c == ' ' || c == '\n' || c == '.' || c == ',' || c == '!' || c == '?') {
+                    saveState();
+                }
+            }
+        });
+
         // Get menu references
         JMenu fileMenu = notepadWindow.getAppMenuBar().getFileMenu();
         JMenu editMenu = notepadWindow.getAppMenuBar().getEditMenu();
@@ -60,9 +92,14 @@ public class NotepadController {
         fileMenu.getItem(1).addActionListener(e -> saveAsFile());
         fileMenu.getItem(2).addActionListener(e -> openFile());
 
+        // Set keyboard shortcuts for File menu
         fileMenu.getItem(0).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK));
         fileMenu.getItem(1).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, KeyEvent.CTRL_DOWN_MASK));
         fileMenu.getItem(2).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, KeyEvent.CTRL_DOWN_MASK));
+
+        // Attach action listeners and shortcuts to Edit menu items
+        editMenu.getItem(0).addActionListener(e -> undoState());
+        editMenu.getItem(0).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_DOWN_MASK));
     }
 
     /**
@@ -76,7 +113,7 @@ public class NotepadController {
         if (file == null) {
             saveAsFile();
         } else {
-            // Get current text from the text area
+            // Get current text from the model
             String text = documentModel.getText();
             System.out.println(text);
 
@@ -138,11 +175,12 @@ public class NotepadController {
                 }
             }
 
-            // Get current text and update model
+            // Get current text from model and update file reference
             String text = documentModel.getText();
             documentModel.setFile(file);
             documentModel.setModified(false);
             updateWindowTitle();
+
             // Save to file
             try {
                 FileService.saveFile(file, text);
@@ -199,14 +237,45 @@ public class NotepadController {
         System.out.println("Opening file...");
     }
 
-    private void onTextChanged(){
+    /**
+     * Handles text changes in the text area.
+     * Syncs the model with the view and updates the window title.
+     */
+    private void onTextChanged() {
         JTextArea textArea = notepadWindow.getTextEditorPanel().getTextArea();
         documentModel.setText(textArea.getText());
-        System.out.println(textArea.getText());
         documentModel.setModified(true);
         updateWindowTitle();
     }
 
+    /**
+     * Saves the current document state to the undo stack.
+     * Only saves if the current text differs from the last saved state.
+     */
+    private void saveState() {
+        String currentText = documentModel.getText();
+        if (!currentText.equals(lastSavedState)) {
+            undoStack.push(lastSavedState);
+            lastSavedState = currentText;
+        }
+    }
+
+    /**
+     * Restores the previous document state from the undo stack.
+     * Updates the view which triggers model synchronization via DocumentListener.
+     */
+    private void undoState() {
+        if (!undoStack.isEmpty()) {
+            String previousState = undoStack.pop();
+            lastSavedState = previousState;
+            notepadWindow.getTextEditorPanel().getTextArea().setText(previousState);
+        }
+    }
+
+    /**
+     * Updates the window title to reflect the current file name and modification status.
+     * Shows "Untitled" if no file is associated, and adds "*" prefix if modified.
+     */
     private void updateWindowTitle() {
         File file = documentModel.getFile();
         String title;
