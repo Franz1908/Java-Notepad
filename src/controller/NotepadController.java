@@ -36,20 +36,17 @@ public class NotepadController {
         textArea.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent documentEvent) {
-                documentModel.setModified(true);
-                updateWindowTitle();
+                onTextChanged();
             }
 
             @Override
             public void removeUpdate(DocumentEvent documentEvent) {
-                documentModel.setModified(true);
-                updateWindowTitle();
+                onTextChanged();
             }
 
             @Override
             public void changedUpdate(DocumentEvent documentEvent) {
-                documentModel.setModified(true);
-                updateWindowTitle();
+                onTextChanged();
             }
         });
 
@@ -80,11 +77,10 @@ public class NotepadController {
             saveAsFile();
         } else {
             // Get current text from the text area
-            String text = notepadWindow.getTextEditorPanel().getTextArea().getText();
+            String text = documentModel.getText();
             System.out.println(text);
 
             // Update model
-            documentModel.setText(text);
             documentModel.setModified(false);
             updateWindowTitle();
 
@@ -143,10 +139,9 @@ public class NotepadController {
             }
 
             // Get current text and update model
-            String text = notepadWindow.getTextEditorPanel().getTextArea().getText();
+            String text = documentModel.getText();
             documentModel.setFile(file);
             documentModel.setModified(false);
-            documentModel.setText(text);
             updateWindowTitle();
             // Save to file
             try {
@@ -202,6 +197,14 @@ public class NotepadController {
         }
 
         System.out.println("Opening file...");
+    }
+
+    private void onTextChanged(){
+        JTextArea textArea = notepadWindow.getTextEditorPanel().getTextArea();
+        documentModel.setText(textArea.getText());
+        System.out.println(textArea.getText());
+        documentModel.setModified(true);
+        updateWindowTitle();
     }
 
     private void updateWindowTitle() {
