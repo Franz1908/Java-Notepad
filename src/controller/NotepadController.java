@@ -26,9 +26,14 @@ public class NotepadController {
 
     /** Stack containing previous document states for undo functionality */
     private Stack<String> undoStack = new Stack<>();
+    /** Stack containing reverted states for redo functionality */
+    private Stack<String> redoStack = new Stack<>();
 
     /** Last saved state to avoid duplicate entries in the undo stack */
     private String lastSavedState = "";
+
+    /** Flag to indicate if the current update is triggered by an undo operation */
+    private boolean isUndo = false;
 
     /**
      * Constructor that initializes the controller and sets up menu action listeners.
@@ -46,6 +51,14 @@ public class NotepadController {
             @Override
             public void insertUpdate(DocumentEvent documentEvent) {
                 onTextChanged();
+                // If this is a new user action (not an undo), clear the redo history
+                if(!isUndo){
+                    redoStack.clear();
+                }
+                else{
+                    // Reset the flag after the undo operation is processed
+                    isUndo = false;
+                }
             }
 
             @Override
@@ -68,6 +81,7 @@ public class NotepadController {
                 // Save state before destructive actions (backspace, delete)
                 if (keyCode == KeyEvent.VK_BACK_SPACE || keyCode == KeyEvent.VK_DELETE) {
                     saveState();
+                    redoStack.clear();
                 }
             }
 
@@ -78,6 +92,7 @@ public class NotepadController {
                 // Save state after word completion (space, enter, punctuation)
                 if (c == ' ' || c == '\n' || c == '.' || c == ',' || c == '!' || c == '?') {
                     saveState();
+                    redoStack.clear();
                 }
             }
         });
@@ -85,7 +100,7 @@ public class NotepadController {
         // Get menu references
         JMenu fileMenu = notepadWindow.getAppMenuBar().getFileMenu();
         JMenu editMenu = notepadWindow.getAppMenuBar().getEditMenu();
-        JMenu formatMenu = notepadWindow.getAppMenuBar().getFormatMenu();
+        // JMenu formatMenu = notepadWindow.getAppMenuBar().getFormatMenu(); // Unused currently
 
         // Attach action listeners to File menu items
         fileMenu.getItem(0).addActionListener(e -> saveFile());
@@ -100,6 +115,8 @@ public class NotepadController {
         // Attach action listeners and shortcuts to Edit menu items
         editMenu.getItem(0).addActionListener(e -> undoState());
         editMenu.getItem(0).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_DOWN_MASK));
+        editMenu.getItem(1).addActionListener(e -> redoState());
+        editMenu.getItem(1).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, KeyEvent.CTRL_DOWN_MASK));
     }
 
     /**
@@ -115,7 +132,6 @@ public class NotepadController {
         } else {
             // Get current text from the model
             String text = documentModel.getText();
-            System.out.println(text);
 
             // Update model
             documentModel.setModified(false);
@@ -133,8 +149,6 @@ public class NotepadController {
                 );
             }
         }
-
-        System.out.println("Saving file...");
     }
 
     /**
@@ -193,8 +207,6 @@ public class NotepadController {
                 );
             }
         }
-
-        System.out.println("Saving file as...");
     }
 
     /**
@@ -233,8 +245,6 @@ public class NotepadController {
                 );
             }
         }
-
-        System.out.println("Opening file...");
     }
 
     /**
@@ -254,6 +264,7 @@ public class NotepadController {
      */
     private void saveState() {
         String currentText = documentModel.getText();
+        // Only save if the content has actually changed since the last save
         if (!currentText.equals(lastSavedState)) {
             undoStack.push(lastSavedState);
             lastSavedState = currentText;
@@ -266,8 +277,29 @@ public class NotepadController {
      */
     private void undoState() {
         if (!undoStack.isEmpty()) {
+            // Save current state to redo stack before undoing
+            redoStack.push(documentModel.getText());
+            // Retrieve and restore previous state
             String previousState = undoStack.pop();
             lastSavedState = previousState;
+            // Set flag to prevent DocumentListener from clearing redo stack during this update
+            isUndo = true;
+            notepadWindow.getTextEditorPanel().getTextArea().setText(previousState);
+        }
+    }
+
+    /**
+     * Performs the redo operation.
+     * Moves the current state to the undo stack and restores the next state from the redo stack.
+     */
+    private void redoState() {
+        if (!redoStack.isEmpty()) {
+            // Retrieve the state to redo
+            String previousState = redoStack.pop();
+            // Push current state back to undo stack
+            undoStack.push(documentModel.getText());
+            lastSavedState = previousState;
+            // Update view
             notepadWindow.getTextEditorPanel().getTextArea().setText(previousState);
         }
     }
