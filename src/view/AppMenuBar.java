@@ -1,7 +1,7 @@
 package view;
 
-import javax.swing.*;
 import java.awt.*;
+import javax.swing.*;
 
 /**
  * Represents the application's top menu bar (File, Edit, Format).
@@ -11,6 +11,29 @@ import java.awt.*;
 public class AppMenuBar extends JPanel {
 
     private JMenuBar menuBar;
+
+    /** Available font families offered in the Format > Font submenu. */
+    private static final String[] FONT_NAMES = {
+        "Monospaced",
+        "SansSerif",
+        "Serif",
+        "Dialog",
+        "Arial",
+        "Courier New",
+    };
+
+    /** Available font sizes offered in the Format > Font size submenu. */
+    private static final int[] FONT_SIZES = {
+        10,
+        12,
+        14,
+        16,
+        18,
+        20,
+        24,
+        28,
+        32,
+    };
 
     /**
      * Constructor that initializes and configures the menu bar.
@@ -50,6 +73,18 @@ public class AppMenuBar extends JPanel {
         // --- Populate Format menu with submenus ---
         JMenu fontMenu = new JMenu("Font");
         JMenu fontSizeMenu = new JMenu("Font size");
+
+        // Populate Font submenu with selectable font families
+        for (String fontName : FONT_NAMES) {
+            JMenuItem fontItem = new JMenuItem(fontName);
+            fontMenu.add(fontItem);
+        }
+
+        // Populate Font size submenu with selectable sizes
+        for (int size : FONT_SIZES) {
+            JMenuItem sizeItem = new JMenuItem(String.valueOf(size));
+            fontSizeMenu.add(sizeItem);
+        }
 
         formatMenu.add(fontSizeMenu);
         formatMenu.add(fontMenu);
@@ -93,5 +128,22 @@ public class AppMenuBar extends JPanel {
     public JMenu getFormatMenu() {
         return this.menuBar.getMenu(2);
     }
-}
 
+    /**
+     * Gets the Font size submenu (Format menu, index 0).
+     *
+     * @return the Font size submenu
+     */
+    public JMenu getFontSizeMenu() {
+        return (JMenu) getFormatMenu().getItem(0);
+    }
+
+    /**
+     * Gets the Font submenu (Format menu, index 1).
+     *
+     * @return the Font submenu
+     */
+    public JMenu getFontMenu() {
+        return (JMenu) getFormatMenu().getItem(1);
+    }
+}

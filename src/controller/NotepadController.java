@@ -1,19 +1,18 @@
 package controller;
 
-import model.DocumentModel;
-import service.FileService;
-import view.NotepadWindow;
-
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.Stack;
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import model.DocumentModel;
+import service.FileService;
+import view.NotepadWindow;
 
 /**
  * Controller class that manages user interactions and coordinates
@@ -41,66 +40,81 @@ public class NotepadController {
      * @param notepadWindow  the main window view
      * @param documentModel  the document data model
      */
-    public NotepadController(NotepadWindow notepadWindow, DocumentModel documentModel) {
+    public NotepadController(
+        NotepadWindow notepadWindow,
+        DocumentModel documentModel
+    ) {
         this.notepadWindow = notepadWindow;
         this.documentModel = documentModel;
         JTextArea textArea = notepadWindow.getTextEditorPanel().getTextArea();
 
         // Add document listener to sync model with view on every text change
-        textArea.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent documentEvent) {
-                onTextChanged();
-                // If this is a new user action (not an undo), clear the redo history
-                if(!isUndo){
-                    redoStack.clear();
+        textArea.getDocument().addDocumentListener(
+            new DocumentListener() {
+                @Override
+                public void insertUpdate(DocumentEvent documentEvent) {
+                    onTextChanged();
+                    // If this is a new user action (not an undo), clear the redo history
+                    if (!isUndo) {
+                        redoStack.clear();
+                    } else {
+                        // Reset the flag after the undo operation is processed
+                        isUndo = false;
+                    }
                 }
-                else{
-                    // Reset the flag after the undo operation is processed
-                    isUndo = false;
+
+                @Override
+                public void removeUpdate(DocumentEvent documentEvent) {
+                    onTextChanged();
+                }
+
+                @Override
+                public void changedUpdate(DocumentEvent documentEvent) {
+                    onTextChanged();
                 }
             }
-
-            @Override
-            public void removeUpdate(DocumentEvent documentEvent) {
-                onTextChanged();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent documentEvent) {
-                onTextChanged();
-            }
-        });
+        );
 
         // Add key listener to save state at appropriate moments for undo functionality
-        textArea.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                int keyCode = e.getKeyCode();
+        textArea.addKeyListener(
+            new KeyAdapter() {
+                @Override
+                public void keyPressed(KeyEvent e) {
+                    int keyCode = e.getKeyCode();
 
-                // Save state before destructive actions (backspace, delete)
-                if (keyCode == KeyEvent.VK_BACK_SPACE || keyCode == KeyEvent.VK_DELETE) {
-                    saveState();
-                    redoStack.clear();
+                    // Save state before destructive actions (backspace, delete)
+                    if (
+                        keyCode == KeyEvent.VK_BACK_SPACE ||
+                        keyCode == KeyEvent.VK_DELETE
+                    ) {
+                        saveState();
+                        redoStack.clear();
+                    }
+                }
+
+                @Override
+                public void keyTyped(KeyEvent e) {
+                    char c = e.getKeyChar();
+
+                    // Save state after word completion (space, enter, punctuation)
+                    if (
+                        c == ' ' ||
+                        c == '\n' ||
+                        c == '.' ||
+                        c == ',' ||
+                        c == '!' ||
+                        c == '?'
+                    ) {
+                        saveState();
+                        redoStack.clear();
+                    }
                 }
             }
-
-            @Override
-            public void keyTyped(KeyEvent e) {
-                char c = e.getKeyChar();
-
-                // Save state after word completion (space, enter, punctuation)
-                if (c == ' ' || c == '\n' || c == '.' || c == ',' || c == '!' || c == '?') {
-                    saveState();
-                    redoStack.clear();
-                }
-            }
-        });
+        );
 
         // Get menu references
         JMenu fileMenu = notepadWindow.getAppMenuBar().getFileMenu();
         JMenu editMenu = notepadWindow.getAppMenuBar().getEditMenu();
-        // JMenu formatMenu = notepadWindow.getAppMenuBar().getFormatMenu(); // Unused currently
 
         // Attach action listeners to File menu items
         fileMenu.getItem(0).addActionListener(e -> saveFile());
@@ -108,15 +122,51 @@ public class NotepadController {
         fileMenu.getItem(2).addActionListener(e -> openFile());
 
         // Set keyboard shortcuts for File menu
-        fileMenu.getItem(0).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK));
-        fileMenu.getItem(1).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_A, KeyEvent.CTRL_DOWN_MASK));
-        fileMenu.getItem(2).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, KeyEvent.CTRL_DOWN_MASK));
+        fileMenu
+            .getItem(0)
+            .setAccelerator(
+                KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK)
+            );
+        fileMenu
+            .getItem(1)
+            .setAccelerator(
+                KeyStroke.getKeyStroke(KeyEvent.VK_A, KeyEvent.CTRL_DOWN_MASK)
+            );
+        fileMenu
+            .getItem(2)
+            .setAccelerator(
+                KeyStroke.getKeyStroke(KeyEvent.VK_O, KeyEvent.CTRL_DOWN_MASK)
+            );
 
         // Attach action listeners and shortcuts to Edit menu items
         editMenu.getItem(0).addActionListener(e -> undoState());
-        editMenu.getItem(0).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_DOWN_MASK));
+        editMenu
+            .getItem(0)
+            .setAccelerator(
+                KeyStroke.getKeyStroke(KeyEvent.VK_Z, KeyEvent.CTRL_DOWN_MASK)
+            );
         editMenu.getItem(1).addActionListener(e -> redoState());
-        editMenu.getItem(1).setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Y, KeyEvent.CTRL_DOWN_MASK));
+        editMenu
+            .getItem(1)
+            .setAccelerator(
+                KeyStroke.getKeyStroke(KeyEvent.VK_Y, KeyEvent.CTRL_DOWN_MASK)
+            );
+
+        // Attach action listeners to Format > Font submenu items
+        JMenu fontMenu = notepadWindow.getAppMenuBar().getFontMenu();
+        for (int i = 0; i < fontMenu.getItemCount(); i++) {
+            JMenuItem fontItem = fontMenu.getItem(i);
+            String fontName = fontItem.getText();
+            fontItem.addActionListener(e -> changeFont(fontName));
+        }
+
+        // Attach action listeners to Format > Font size submenu items
+        JMenu fontSizeMenu = notepadWindow.getAppMenuBar().getFontSizeMenu();
+        for (int i = 0; i < fontSizeMenu.getItemCount(); i++) {
+            JMenuItem sizeItem = fontSizeMenu.getItem(i);
+            int size = Integer.parseInt(sizeItem.getText());
+            sizeItem.addActionListener(e -> changeFontSize(size));
+        }
     }
 
     /**
@@ -142,10 +192,10 @@ public class NotepadController {
                 FileService.saveFile(file, text);
             } catch (IOException e) {
                 JOptionPane.showMessageDialog(
-                        notepadWindow,
-                        "The file cannot be saved",
-                        "Save error",
-                        JOptionPane.ERROR_MESSAGE
+                    notepadWindow,
+                    "The file cannot be saved",
+                    "Save error",
+                    JOptionPane.ERROR_MESSAGE
                 );
             }
         }
@@ -159,13 +209,18 @@ public class NotepadController {
     public void saveAsFile() {
         // Create and configure file chooser
         JFileChooser chooser = new JFileChooser();
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("Text File(*.txt)", "txt");
+        FileNameExtensionFilter filter = new FileNameExtensionFilter(
+            "Text File(*.txt)",
+            "txt"
+        );
         chooser.setFileFilter(filter);
         chooser.setDialogTitle("Save File");
         chooser.setApproveButtonText("Save");
 
         // Show save dialog
-        if (chooser.showSaveDialog(notepadWindow) == JFileChooser.APPROVE_OPTION) {
+        if (
+            chooser.showSaveDialog(notepadWindow) == JFileChooser.APPROVE_OPTION
+        ) {
             File file = chooser.getSelectedFile();
 
             // Auto-append .txt extension if missing
@@ -176,11 +231,13 @@ public class NotepadController {
             // Confirm overwrite if file already exists
             if (file.exists()) {
                 int result = JOptionPane.showConfirmDialog(
-                        notepadWindow,
-                        "The file '" + file.getName() + "' already exists. Do you want to overwrite it?",
-                        "Confirm Overwrite",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.WARNING_MESSAGE
+                    notepadWindow,
+                    "The file '" +
+                        file.getName() +
+                        "' already exists. Do you want to overwrite it?",
+                    "Confirm Overwrite",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE
                 );
 
                 // User chose not to overwrite, exit without saving
@@ -200,10 +257,10 @@ public class NotepadController {
                 FileService.saveFile(file, text);
             } catch (IOException e) {
                 JOptionPane.showMessageDialog(
-                        notepadWindow,
-                        "The file cannot be saved",
-                        "Save as error",
-                        JOptionPane.ERROR_MESSAGE
+                    notepadWindow,
+                    "The file cannot be saved",
+                    "Save as error",
+                    JOptionPane.ERROR_MESSAGE
                 );
             }
         }
@@ -216,13 +273,18 @@ public class NotepadController {
     public void openFile() {
         // Create and configure file chooser
         JFileChooser chooser = new JFileChooser();
-        FileNameExtensionFilter filter = new FileNameExtensionFilter("Text File(*.txt)", "txt");
+        FileNameExtensionFilter filter = new FileNameExtensionFilter(
+            "Text File(*.txt)",
+            "txt"
+        );
         chooser.setFileFilter(filter);
         chooser.setDialogTitle("Open File");
         chooser.setApproveButtonText("Open");
 
         // Show open dialog
-        if (chooser.showOpenDialog(notepadWindow) == JFileChooser.APPROVE_OPTION) {
+        if (
+            chooser.showOpenDialog(notepadWindow) == JFileChooser.APPROVE_OPTION
+        ) {
             File file = chooser.getSelectedFile();
 
             // Update model with new file reference
@@ -238,10 +300,10 @@ public class NotepadController {
                 notepadWindow.getTextEditorPanel().getTextArea().setText(text);
             } catch (IOException e) {
                 JOptionPane.showMessageDialog(
-                        notepadWindow,
-                        "The file cannot be opened",
-                        "Open error",
-                        JOptionPane.ERROR_MESSAGE
+                    notepadWindow,
+                    "The file cannot be opened",
+                    "Open error",
+                    JOptionPane.ERROR_MESSAGE
                 );
             }
         }
@@ -284,7 +346,10 @@ public class NotepadController {
             lastSavedState = previousState;
             // Set flag to prevent DocumentListener from clearing redo stack during this update
             isUndo = true;
-            notepadWindow.getTextEditorPanel().getTextArea().setText(previousState);
+            notepadWindow
+                .getTextEditorPanel()
+                .getTextArea()
+                .setText(previousState);
         }
     }
 
@@ -300,8 +365,37 @@ public class NotepadController {
             undoStack.push(documentModel.getText());
             lastSavedState = previousState;
             // Update view
-            notepadWindow.getTextEditorPanel().getTextArea().setText(previousState);
+            notepadWindow
+                .getTextEditorPanel()
+                .getTextArea()
+                .setText(previousState);
         }
+    }
+
+    /**
+     * Changes the font family of the text area, preserving the current size and style.
+     *
+     * @param fontName the name of the font family to apply
+     */
+    private void changeFont(String fontName) {
+        JTextArea textArea = notepadWindow.getTextEditorPanel().getTextArea();
+        Font currentFont = textArea.getFont();
+        textArea.setFont(
+            new Font(fontName, currentFont.getStyle(), currentFont.getSize())
+        );
+    }
+
+    /**
+     * Changes the font size of the text area, preserving the current family and style.
+     *
+     * @param size the new font size in points
+     */
+    private void changeFontSize(int size) {
+        JTextArea textArea = notepadWindow.getTextEditorPanel().getTextArea();
+        Font currentFont = textArea.getFont();
+        textArea.setFont(
+            new Font(currentFont.getName(), currentFont.getStyle(), size)
+        );
     }
 
     /**
